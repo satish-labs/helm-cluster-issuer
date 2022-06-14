@@ -1,0 +1,64 @@
+---
+email: webmaster@example.com
+baseDomain: example.com
+
+# Issuers settings.
+issuer:
+  dns:
+    enabled: false
+  http:
+    enabled: false
+
+# Cert Manager deployment details
+certmanager:
+  namespace: cert-manager
+
+# Resolvers
+provider: aws
+#provider: google
+
+# AWS Route53
+aws:
+  route53:
+    region: us-east-1
+    accessKeyID: xxx
+    secretKey:
+      secret: xxx
+      # Ignore above key if external Secret is enabled
+      secretAccessKeySecretRef:
+        enabled: false
+        name: xxx
+        key: xxx
+    hostedZoneID: xxx
+
+# Google Cloud DNS
+google:
+  clouddns:
+    # GCP Project ID
+    project: my-project
+    # https://cert-manager.io/docs/configuration/acme/dns01/google/#set-up-a-service-account
+    # kubectl -n you-cert-manager-namespace create secret generic clouddns-letsencrypt-service-account --from-file=credentials.json
+    serviceAccountSecretRef:
+      # Name of the resource being referred to. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names
+      name: "clouddns-letsencrypt-service-account"
+      # The key of the entry in the Secret resource's `data` field to be used. Some instances of this field may be defaulted, in others it may be required.
+      key: credentials.json
+
+selfsigned:
+  issuerName: "default"
+
+# For all providers
+http:
+  # Ingress class to use for creating
+  ingress:
+    class: nginx
+  privateKey:
+    privateKeySecretRef:
+      enabled: true
+      name: letsencrypt-private-key-http-01-secret
+      key: tls.key
+
+letsencrypt:
+  server: https://acme-staging-v02.api.letsencrypt.org/directory
+  # Use below key for production
+  # server: https://acme-v02.api.letsencrypt.org/directory

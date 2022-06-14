@@ -1,0 +1,30 @@
+{{- if ne .Values.provider "selfsigned" }}
+{{- if .Values.issuer.http.enabled }}
+---
+apiVersion: cert-manager.io/v1
+kind: ClusterIssuer
+metadata:
+  name: issuer-http01-{{ .Values.baseDomain | replace "." "-" }}
+spec:
+  acme:
+    # The ACME server URL
+    server: {{ .Values.letsencrypt.server }}
+    # Email address used for ACME registration
+    email: {{ .Values.email }}
+    # Name of a secret used to store the ACME account private key from step 3
+    privateKeySecretRef:
+    {{- if .Values.http.privateKey.privateKeySecretRef.enabled }}
+      name: {{ .Values.http.privateKey.privateKeySecretRef.name }}
+      {{- if not (empty .Values.http.privateKey.privateKeySecretRef.key) }}
+      key: {{ .Values.http.privateKey.privateKeySecretRef.key }}
+      {{- end }}
+    {{- else }}
+      name: letsencrypt-private-key-http-01-{{ .Values.baseDomain | replace "." "-" }}
+    {{- end }}
+    # Enable the HTTP-01 challenge provider
+    solvers:
+    - http01:
+       ingress:
+         class: {{ .Values.http.ingress.class }}
+{{- end }}
+{{- end }}

@@ -1,0 +1,41 @@
+{{- if ne .Values.provider "selfsigned" }}
+{{- if .Values.issuer.dns.enabled }}
+---
+apiVersion: cert-manager.io/v1
+kind: ClusterIssuer
+metadata:
+  name: issuer-dns01-{{ .Values.baseDomain | replace "." "-" }}
+spec:
+  acme:
+    email: {{ .Values.email }}
+    server: {{ .Values.letsencrypt.server }}
+    privateKeySecretRef:
+      name: letsencrypt-private-key-dns-01-{{ .Values.baseDomain | replace "." "-" }}
+    solvers:
+    - selector:
+        dnsZones:
+          - {{ .Values.baseDomain }}
+      dns01:
+        {{- if eq .Values.provider "aws" }}
+        route53:
+          region: {{ .Values.aws.route53.region }}
+          hostedZoneID: {{ .Values.aws.route53.hostedZoneID }}
+          accessKeyID: {{ .Values.aws.route53.accessKeyID }}
+          secretAccessKeySecretRef:
+          {{- if .Values.aws.route53.secretKey.secretAccessKeySecretRef.enabled }}
+            name: {{ .Values.aws.route53.secretKey.secretAccessKeySecretRef.name }}
+            key: {{ .Values.aws.route53.secretKey.secretAccessKeySecretRef.key }}
+          {{ else }}
+            name: {{ .Chart.Name }}-aws-route53-credentials-secret
+            key: secret-access-key
+          {{ end }}  
+        {{- end }}
+        {{- if eq .Values.provider "google" }}
+        clouddns:
+          project: {{ .Values.google.clouddns.project }}
+          serviceAccountSecretRef:
+            name: {{ .Values.google.clouddns.serviceAccountSecretRef.name }}
+            key: {{ .Values.google.clouddns.serviceAccountSecretRef.key }}
+        {{- end }}
+{{- end }}
+{{- end }}
